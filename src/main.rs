@@ -2,7 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use std::error::Error;
 use std::process;
+
+const PPERROR: &str = "Unexpected end of data while parsing Git output";
 
 fn color(c: i32) {
     if c >= 0 {
@@ -20,24 +23,18 @@ fn bold(b: bool) {
     }
 }
 
-fn main() {
-    let status = match process::Command::new("git")
-            .args(&["status", "--porcelain=v2", "-z", "--branch", "--untracked-files=all"])
-            .stdin(process::Stdio::null())
-            .stderr(process::Stdio::null())
-            .output() {
-        Err(e) => {
-            eprintln!("git: {}", e);
-            process::exit(1);
-        },
-        Ok(output) => {
-            if !output.status.success() {
-                // We're most likely not in a Git repo
-                process::exit(0);
-            }
-            String::from_utf8(output.stdout).expect("Failed to decode output from Git")
-        },
-    };
+fn main() -> Result<(), Box<Error>> {
+    let output = process::Command::new("git")
+        .args(&["status", "--porcelain=v2", "-z", "--branch", "--untracked-files=all"])
+        .stdin(process::Stdio::null())
+        .stderr(process::Stdio::null())
+        .output()?;
+    if !output.status.success() {
+        // We're most likely not in a Git repo
+        return Ok(())
+    }
+    let status = String::from_utf8(output.stdout)
+        .ok().ok_or("Invalid UTF-8 while decoding Git output")?;
 
     // Details on the current branch
     let mut branch = None;
@@ -57,27 +54,27 @@ fn main() {
         match entry.next() {
             // Header lines
             Some("#") => {
-                match entry.next().unwrap() {
+                match entry.next().ok_or(PPERROR)? {
                     "branch.head" => {
-                        let head = entry.next().unwrap();
+                        let head = entry.next().ok_or(PPERROR)?;
                         if head != "(detached)" {
                             branch = Some(head);
                         }
                     },
                     "branch.ab" => {
-                        let a = entry.next().unwrap();
-                        let b = entry.next().unwrap();
-                        ahead = a.parse::<i64>().unwrap().abs();
-                        behind = b.parse::<i64>().unwrap().abs();
+                        let a = entry.next().ok_or(PPERROR)?;
+                        let b = entry.next().ok_or(PPERROR)?;
+                        ahead = a.parse::<i64>()?.abs();
+                        behind = b.parse::<i64>()?.abs();
                     },
                     _ => {},
                 }
             },
             // File entries
             Some("1") | Some("2") => {
-                let mut xy = entry.next().unwrap().chars();
-                let x = xy.next().unwrap();
-                let y = xy.next().unwrap();
+                let mut xy = entry.next().ok_or(PPERROR)?.chars();
+                let x = xy.next().ok_or(PPERROR)?;
+                let y = xy.next().ok_or(PPERROR)?;
                 if x != '.' {
                     staged += 1;
                 }
@@ -140,4 +137,6 @@ fn main() {
 
     color(-1);
     print!(")");
+
+    Ok(())
 }
