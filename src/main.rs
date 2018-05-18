@@ -5,7 +5,17 @@
 use std::error::Error;
 use std::process;
 
-const PPERROR: &str = "Unexpected end of data while parsing Git output";
+struct GitStatus {
+    branch: Option<String>,
+    ahead: i64,
+    behind: i64,
+
+    staged: i64,
+    modified: i64,
+    deleted: i64,
+    unmerged: i64,
+    untracked: i64,
+}
 
 fn color(c: i32) {
     if c >= 0 {
@@ -23,6 +33,62 @@ fn bold(b: bool) {
     }
 }
 
+fn parse_porcelain2(data: String) -> Option<GitStatus> {
+    let mut status = GitStatus {
+        branch: None,
+        ahead: 0,
+        behind: 0,
+
+        staged: 0,
+        modified: 0,
+        deleted: 0,
+        unmerged: 0,
+        untracked: 0,
+    };
+    // Simple parser for the porcelain v2 format
+    for entry in data.split('\0') {
+        let mut entry = entry.split(' ');
+        match entry.next() {
+            // Header lines
+            Some("#") => {
+                match entry.next()? {
+                    "branch.head" => {
+                        let head = entry.next()?;
+                        if head != "(detached)" {
+                            status.branch = Some(String::from(head));
+                        }
+                    },
+                    "branch.ab" => {
+                        let a = entry.next()?;
+                        let b = entry.next()?;
+                        status.ahead = a.parse::<i64>().ok()?.abs();
+                        status.behind = b.parse::<i64>().ok()?.abs();
+                    },
+                    _ => {},
+                }
+            },
+            // File entries
+            Some("1") | Some("2") => {
+                let mut xy = entry.next()?.chars();
+                let x = xy.next()?;
+                let y = xy.next()?;
+                if x != '.' {
+                    status.staged += 1;
+                }
+                match y {
+                    'M' => status.modified += 1,
+                    'D' => status.deleted += 1,
+                    _ => {},
+                }
+            }
+            Some("u") => status.unmerged += 1,
+            Some("?") => status.untracked += 1,
+            _ => {},
+        }
+    }
+    Some(status)
+}
+
 fn main() -> Result<(), Box<Error>> {
     let output = process::Command::new("git")
         .args(&["status", "--porcelain=v2", "-z", "--branch", "--untracked-files=all"])
@@ -36,65 +102,14 @@ fn main() -> Result<(), Box<Error>> {
     let status = String::from_utf8(output.stdout)
         .ok().ok_or("Invalid UTF-8 while decoding Git output")?;
 
-    // Details on the current branch
-    let mut branch = None;
-    let mut ahead = 0;
-    let mut behind = 0;
-
-    // File counters
-    let mut staged = 0;
-    let mut modified = 0;
-    let mut deleted = 0;
-    let mut unmerged = 0;
-    let mut untracked = 0;
-
-    // Simple parser for the porcelain v2 format
-    for entry in status.split('\0') {
-        let mut entry = entry.split(' ');
-        match entry.next() {
-            // Header lines
-            Some("#") => {
-                match entry.next().ok_or(PPERROR)? {
-                    "branch.head" => {
-                        let head = entry.next().ok_or(PPERROR)?;
-                        if head != "(detached)" {
-                            branch = Some(head);
-                        }
-                    },
-                    "branch.ab" => {
-                        let a = entry.next().ok_or(PPERROR)?;
-                        let b = entry.next().ok_or(PPERROR)?;
-                        ahead = a.parse::<i64>()?.abs();
-                        behind = b.parse::<i64>()?.abs();
-                    },
-                    _ => {},
-                }
-            },
-            // File entries
-            Some("1") | Some("2") => {
-                let mut xy = entry.next().ok_or(PPERROR)?.chars();
-                let x = xy.next().ok_or(PPERROR)?;
-                let y = xy.next().ok_or(PPERROR)?;
-                if x != '.' {
-                    staged += 1;
-                }
-                match y {
-                    'M' => modified += 1,
-                    'D' => deleted += 1,
-                    _ => {},
-                }
-            }
-            Some("u") => unmerged += 1,
-            Some("?") => untracked += 1,
-            _ => {},
-        }
-    }
+    let status = parse_porcelain2(status)
+        .ok_or("Error while parsing Git output")?;
 
     print!("(");
 
     color(15);
     bold(true);
-    if let Some(branch) = branch {
+    if let Some(branch) = status.branch {
         print!("{}", branch);
     } else {
         // Detached head
@@ -104,35 +119,35 @@ fn main() -> Result<(), Box<Error>> {
     color(-1);
 
     // Divergence with remote branch
-    if ahead != 0 {
-        print!("↑{}", ahead);
+    if status.ahead != 0 {
+        print!("↑{}", status.ahead);
     }
-    if behind != 0 {
-        print!("↓{}", behind);
+    if status.behind != 0 {
+        print!("↓{}", status.behind);
     }
 
-    if untracked + modified + deleted + unmerged + staged > 0 {
+    if status.untracked + status.modified + status.deleted + status.unmerged + status.staged > 0 {
         print!("|");
     }
-    if untracked != 0 {
+    if status.untracked != 0 {
         color(2);
-        print!("+{}", untracked);
+        print!("+{}", status.untracked);
     }
-    if modified != 0 {
+    if status.modified != 0 {
         color(5);
-        print!("~{}", modified);
+        print!("~{}", status.modified);
     }
-    if deleted != 0 {
+    if status.deleted != 0 {
         color(1);
-        print!("-{}", deleted);
+        print!("-{}", status.deleted);
     }
-    if unmerged != 0 {
+    if status.unmerged != 0 {
         color(3);
-        print!("x{}", unmerged);
+        print!("x{}", status.unmerged);
     }
-    if staged != 0 {
+    if status.staged != 0 {
         color(4);
-        print!("•{}", staged);
+        print!("•{}", status.staged);
     }
 
     color(-1);
