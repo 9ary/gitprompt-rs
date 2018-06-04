@@ -29,7 +29,7 @@ fn bold(b: bool) {
     if b {
         print!("\x1b[1m");
     } else {
-        print!("\x1b[21m");
+        print!("\x1b[22m");
     }
 }
 
