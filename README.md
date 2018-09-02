@@ -6,7 +6,8 @@ A very simple Git prompt written in Rust
 
 Just add `$(gitprompt-rs)` to your shell prompt.
 
-If you're using ZSH, you will want to use `$(gitprompt-rs zsh)` in order to
+If you're using ZSH, add `setopt promptsubst` to your zshrc, set the `PROMPT`
+variable with single quotes `'`, and use `$(gitprompt-rs zsh)` in order to
 insert the appropriate escapes in the output, otherwise, it will miscalculate
 the length of your prompt and go crazy.
 
