@@ -1,6 +1,7 @@
 [package]
 name = "gitprompt-rs"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["Dan Elkouby <streetwalkermc@gmail.com>"]
 
 [dependencies]
+"lazy_static" = "1.1.0"

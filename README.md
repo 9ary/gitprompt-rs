@@ -6,18 +6,9 @@ A very simple Git prompt written in Rust
 
 Just add `$(gitprompt-rs)` to your shell prompt.
 
-If you're using ZSH, add `setopt promptsubst` to your zshrc, set the `PROMPT`
-variable with single quotes `'`, and use the following function to wrap the
-output:
-```shell
-function pr_git() {
-    # Wrap SGR sequences with %{ and %} to avoid confusing zsh's length calculation
-    gitprompt-rs | perl -p -e 's/(\[.+?m)/%{\1%}/g'
-}
-```
-This isn't built into the program for compatibility with other shells while
-keeping things as simple as possible, and the overhead of calling Perl isn't
-that big anyway.
+If you're using ZSH, you will want to use `$(gitprompt-rs zsh)` in order to
+insert the appropriate escapes in the output, otherwise, it will miscalculate
+the length of your prompt and go crazy.
 
 The prompt looks like this: `(master↑4↓7|+2~3-5x6•8)`. The information on
 display is as follows:

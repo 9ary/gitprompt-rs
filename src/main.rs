@@ -2,8 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+use std::env;
 use std::error::Error;
 use std::process;
+
+#[macro_use]
+extern crate lazy_static;
 
 struct GitStatus {
     branch: Option<String>,
@@ -17,20 +21,45 @@ struct GitStatus {
     untracked: i64,
 }
 
+lazy_static! {
+    static ref ZSH_ESCAPE: bool = {
+        match env::args().nth(1) {
+            Some(arg) => arg == "zsh",
+            _ => false,
+        }
+    };
+}
+
+fn zsh_escape_start() {
+    if *ZSH_ESCAPE {
+        print!("%{{");
+    }
+}
+
+fn zsh_escape_end() {
+    if *ZSH_ESCAPE {
+        print!("%}}");
+    }
+}
+
 fn color(c: i32) {
+    zsh_escape_start();
     if c >= 0 {
         print!("\x1b[38;5;{}m", c);
     } else {
         print!("\x1b[39m");
     }
+    zsh_escape_end();
 }
 
 fn bold(b: bool) {
+    zsh_escape_start();
     if b {
         print!("\x1b[1m");
     } else {
         print!("\x1b[22m");
     }
+    zsh_escape_end();
 }
 
 fn parse_porcelain2(data: String) -> Option<GitStatus> {
