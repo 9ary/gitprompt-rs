@@ -19,6 +19,19 @@ This isn't built into the program for compatibility with other shells while
 keeping things as simple as possible, and the overhead of calling Perl isn't
 that big anyway.
 
+The prompt looks like this: `(master↑4↓7|+2~3-5x6•8)`. The information on
+display is as follows:
+- Branch info:
+  - `master`: name of the current branch, `:HEAD` in detached head mode
+  - `↑`: number of commits ahead of remote
+  - `↓`: number of commits behind remote
+- Work area:
+  - `+`: untracked (new) files
+  - `~`: modified files
+  - `-`: deleted files
+  - `x`: merge conflicts
+- `•`: staged changes
+
 ## Installation
 
 - Manual: Make sure you have a recent Rust toolchain. Clone this repo, then run
