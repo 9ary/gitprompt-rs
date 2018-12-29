@@ -28,5 +28,6 @@ display is as follows:
 
 - Manual: Make sure you have a recent Rust toolchain. Clone this repo, then run
   `cargo install`.
-- Arch Linux: [AUR package](https://aur.archlinux.org/packages/gitprompt-rs/)
+- [Arch Linux](https://www.archlinux.org/packages?name=gitprompt-rs):
+  `pacman -S gitprompt-rs`
 - Other distros: make a pull request to add your package or build script!
