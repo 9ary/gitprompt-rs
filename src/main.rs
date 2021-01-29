@@ -28,38 +28,50 @@ lazy_static! {
             _ => false,
         }
     };
+    static ref BASH_ESCAPE: bool = {
+        match env::args().nth(1) {
+            Some(arg) => arg == "bash",
+            _ => false,
+        }
+    };
 }
 
-fn zsh_escape_start() {
+fn escape_start() {
     if *ZSH_ESCAPE {
         print!("%{{");
     }
+    if *BASH_ESCAPE {
+        print!("\\[");
+    }
 }
 
-fn zsh_escape_end() {
+fn escape_end() {
     if *ZSH_ESCAPE {
         print!("%}}");
+    }
+    if *BASH_ESCAPE {
+        print!("\\]");
     }
 }
 
 fn color(c: i32) {
-    zsh_escape_start();
+    escape_start();
     if c >= 0 {
         print!("\x1b[38;5;{}m", c);
     } else {
         print!("\x1b[39m");
     }
-    zsh_escape_end();
+    escape_end();
 }
 
 fn bold(b: bool) {
-    zsh_escape_start();
+    escape_start();
     if b {
         print!("\x1b[1m");
     } else {
         print!("\x1b[22m");
     }
-    zsh_escape_end();
+    escape_end();
 }
 
 fn parse_porcelain2(data: String) -> Option<GitStatus> {
