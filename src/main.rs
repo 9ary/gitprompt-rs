@@ -130,7 +130,7 @@ fn parse_porcelain2(data: String) -> Option<GitStatus> {
     Some(status)
 }
 
-fn main() -> Result<(), Box<Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
     let output = process::Command::new("git")
         .args(&["status", "--porcelain=v2", "-z", "--branch", "--untracked-files=all"])
         .stdin(process::Stdio::null())
