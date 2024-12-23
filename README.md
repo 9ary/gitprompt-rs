@@ -28,10 +28,12 @@ display is as follows:
 
 ## Installation
 
+[![Packaging status](https://repology.org/badge/vertical-allrepos/gitprompt-rs.svg)](https://repology.org/project/gitprompt-rs/versions)
+
 - Manual: Make sure you have a recent Rust toolchain. Clone this repo, then run
   `cargo install --path .`.
 - [crates.io](https://crates.io/crates/gitprompt-rs):
   `cargo install gitprompt-rs`
-- [Arch Linux](https://www.archlinux.org/packages?name=gitprompt-rs):
-  `pacman -S gitprompt-rs`
-- Other distros: make a pull request to add your package or build script!
+- Nix (with flakes):
+  `nix run github:9ary/gitprompt-rs`
+  The flake exports an overlay which is the recommended way to consume git HEAD.
