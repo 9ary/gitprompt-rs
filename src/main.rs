@@ -122,12 +122,33 @@ fn parse_porcelain2(data: String) -> Option<GitStatus> {
 
 fn main() -> Result<(), Box<dyn Error>> {
 	let output = process::Command::new("git")
+		.args(["config", "--get", "-z", "gitprompt-rs.showUntrackedFiles"])
+		.stdin(process::Stdio::null())
+		.stderr(process::Stdio::null())
+		.output()?;
+	// Any errors here are non-fatal and result in using the default value
+	let untracked = output
+		.status
+		.success()
+		.then_some(())
+		.and_then(|_| {
+			let out = String::from_utf8(output.stdout).ok()?;
+			out.split('\0').next().and_then(|v| match v {
+				"all" => Some("all"),
+				"normal" | "yes" | "true" | "1" => Some("normal"),
+				"no" | "false" | "0" => Some("no"),
+				_ => None,
+			})
+		})
+		.unwrap_or("all");
+
+	let output = process::Command::new("git")
 		.args([
 			"status",
 			"--porcelain=v2",
 			"-z",
 			"--branch",
-			"--untracked-files=all",
+			format!("--untracked-files={untracked}").as_str(),
 		])
 		.stdin(process::Stdio::null())
 		.stderr(process::Stdio::null())
