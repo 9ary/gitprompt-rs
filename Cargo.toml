@@ -2,9 +2,9 @@
 name = "gitprompt-rs"
 description = "A very simple Git prompt"
 version = "0.3.0"
-authors = ["Dan Elkouby <streetwalkermc@gmail.com>"]
+authors = ["novenary <novenary@kwak.zip>"]
 license = "MPL-2.0"
-repository = "https://github.com/Streetwalrus/gitprompt-rs"
+repository = "https://github.com/9ary/gitprompt-rs"
 edition = "2021"
 
 [dependencies]
