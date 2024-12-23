@@ -29,7 +29,7 @@ display is as follows:
 > [!TIP]
 > `git status` can be pretty slow on large repositories. By default,
 > gitprompt-rs forces scanning for *all* untracked files. This can be overridden
-> globally by setting the Git option `gitprompt-rs.showUntrackedFiles`, which
+> by setting the Git option `gitprompt-rs.showUntrackedFiles`, which
 > accepts the same values as `status.showUntrackedFiles`, for a huge speedup
 > (475ms -> 45ms in nixpkgs on my machine).
 
