@@ -107,6 +107,7 @@ fn parse_porcelain2(data: String) -> Option<GitStatus> {
 					status.staged += 1;
 				}
 				match y {
+					'A' => status.untracked += 1,
 					'M' => status.modified += 1,
 					'D' => status.deleted += 1,
 					_ => {}
