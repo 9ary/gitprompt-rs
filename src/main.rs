@@ -5,9 +5,7 @@
 use std::env;
 use std::error::Error;
 use std::process;
-
-#[macro_use]
-extern crate lazy_static;
+use std::sync::LazyLock;
 
 struct GitStatus {
     branch: Option<String>,
@@ -21,36 +19,34 @@ struct GitStatus {
     untracked: i64,
 }
 
-lazy_static! {
-    static ref ZSH_ESCAPE: bool = {
-        match env::args().nth(1) {
-            Some(arg) => arg == "zsh",
-            _ => false,
-        }
-    };
-    static ref BASH_ESCAPE: bool = {
-        match env::args().nth(1) {
-            Some(arg) => arg == "bash",
-            _ => false,
-        }
-    };
+enum Shell {
+    Unknown,
+    Bash,
+    Zsh,
 }
 
+static SHELL: LazyLock<Shell> = LazyLock::new(|| match env::args().nth(1) {
+    Some(arg) => match arg.as_str() {
+        "bash" => Shell::Bash,
+        "zsh" => Shell::Zsh,
+        _ => Shell::Unknown,
+    },
+    None => Shell::Unknown,
+});
+
 fn escape_start() {
-    if *ZSH_ESCAPE {
-        print!("%{{");
-    }
-    if *BASH_ESCAPE {
-        print!("\\[");
+    match *SHELL {
+        Shell::Bash => print!("\\["),
+        Shell::Zsh => print!("%{{"),
+        _ => {}
     }
 }
 
 fn escape_end() {
-    if *ZSH_ESCAPE {
-        print!("%}}");
-    }
-    if *BASH_ESCAPE {
-        print!("\\]");
+    match *SHELL {
+        Shell::Bash => print!("\\]"),
+        Shell::Zsh => print!("%}}"),
+        _ => {}
     }
 }
 
