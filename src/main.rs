@@ -126,7 +126,7 @@ fn parse_porcelain2(data: String) -> Option<GitStatus> {
 
 fn main() -> Result<(), Box<dyn Error>> {
 	let output = process::Command::new("git")
-		.args(&[
+		.args([
 			"status",
 			"--porcelain=v2",
 			"-z",
